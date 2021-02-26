@@ -122,3 +122,7 @@ tasks.register('publishMac') {
 tasks.register('publishWindows') {
   dependsOn 'publishMingwPublicationToMavenRepository'
 }
+
+tasks.register('publishLinux') {
+  dependsOn 'publishLinuxX64PublicationToMavenRepository'
+}

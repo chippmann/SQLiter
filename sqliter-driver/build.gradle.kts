@@ -49,7 +49,12 @@ kotlin {
 	knTargets.forEach { target ->
 		configInterop(target)
 		val test by target.compilations.getting
-		test.kotlinOptions.freeCompilerArgs += listOf("-linker-options", "-lsqlite3", "-L/usr/lib")
+
+		if (target.name.startsWith("linux")) {
+			test.kotlinOptions.freeCompilerArgs += listOf("-linker-options", "-lsqlite3 -L/usr/lib")
+		} else {
+			test.kotlinOptions.freeCompilerArgs += listOf("-linker-options", "-lsqlite3")
+		}
 	}
 
 	sourceSets {
@@ -71,7 +76,6 @@ kotlin {
 		val appleMain = sourceSets.maybeCreate("appleMain").apply {
 			dependsOn(nativeCommonMain)
 		}
-
 		val linuxMain = sourceSets.maybeCreate("linuxX64Main").apply {
 			dependsOn(nativeCommonMain)
 		}
