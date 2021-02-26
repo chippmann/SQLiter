@@ -23,7 +23,8 @@ kotlin {
 	val knTargets = if (ideaActive) {
 		listOf(
 			macosX64("nativeCommon"),
-			mingwX64("mingw")
+			mingwX64("mingw"),
+			linuxX64()
 		)
 	} else {
 		listOf(
@@ -40,15 +41,15 @@ kotlin {
 				compilations.forEach {
 					it.kotlinOptions.freeCompilerArgs += listOf("-linker-options", "-Lc:\\msys64\\mingw64\\lib")
 				}
-			}
+			},
+			linuxX64()
 		)
 	}
 
-	knTargets.forEach { configInterop(it) }
-
 	knTargets.forEach { target ->
+		configInterop(target)
 		val test by target.compilations.getting
-		test.kotlinOptions.freeCompilerArgs += listOf("-linker-options", "-lsqlite3")
+		test.kotlinOptions.freeCompilerArgs += listOf("-linker-options", "-lsqlite3", "-L/usr/lib")
 	}
 
 	sourceSets {
@@ -71,17 +72,28 @@ kotlin {
 			dependsOn(nativeCommonMain)
 		}
 
-		if(!ideaActive) {
+		val linuxMain = sourceSets.maybeCreate("linuxX64Main").apply {
+			dependsOn(nativeCommonMain)
+		}
+
+		if (!ideaActive) {
 			val mingwMain = sourceSets.maybeCreate("mingwMain").apply {
 				dependsOn(nativeCommonMain)
 			}
 			knTargets.forEach { target ->
-				if (target.name.startsWith("mingw")) {
-					target.compilations.getByName("main").source(mingwMain)
-					target.compilations.getByName("test").source(nativeCommonTest)
-				} else {
-					target.compilations.getByName("main").source(appleMain)
-					target.compilations.getByName("test").source(nativeCommonTest)
+				when {
+					target.name.startsWith("mingw") -> {
+						target.compilations.getByName("main").source(mingwMain)
+						target.compilations.getByName("test").source(nativeCommonTest)
+					}
+					target.name.startsWith("linux") -> {
+						target.compilations.getByName("main").source(linuxMain)
+						target.compilations.getByName("test").source(nativeCommonTest)
+					}
+					else -> {
+						target.compilations.getByName("main").source(appleMain)
+						target.compilations.getByName("test").source(nativeCommonTest)
+					}
 				}
 			}
 		}
